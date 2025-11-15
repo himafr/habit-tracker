@@ -1,7 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { Button, Text, TextInput } from "react-native-paper";
-export default function Signup({ toggle }: { toggle: () => void }) {
+import { ActivityIndicator, Button, Text, TextInput } from "react-native-paper";
+import { useAuth } from "../context/AuthContext";
+export default function Signup({ toggle,showSnackbar,handleSnackText }: { toggle: () => void ,showSnackbar:()=>void,handleSnackText:(v:string)=>void}) {
+  const [email,setEmail]=useState("");
+  const [password,setPassword]=useState("");
+  const [fullName,setFullName]=useState<string>("");
+  const {signup,isLoading}=useAuth();
+  function handleSignup(){
+
+    signup({fullName,email,password})
+    .then(()=>{
+      console.log("called")
+      handleSnackText("you will receive an email to verify your account.")
+      showSnackbar()
+      setPassword("");
+      setEmail("");
+      setFullName("");
+    }).catch((e)=>{
+      if(e instanceof Error){
+        handleSnackText(e.message);
+      }else{
+        handleSnackText("something went wrong");
+      }
+      showSnackbar();
+    })
+    }
+  
   return (
     <View style={styles.content}>
       <Text style={styles.title}>Create An Account </Text>
@@ -11,6 +36,8 @@ export default function Signup({ toggle }: { toggle: () => void }) {
         label="Name"
         placeholder="Hema Sallem"
         keyboardType="default"
+        value={fullName}
+        onChangeText={setFullName}
         theme={{ roundness: 16 }}
       />
       <TextInput
@@ -20,6 +47,7 @@ export default function Signup({ toggle }: { toggle: () => void }) {
         placeholder="example@gmail.com"
         keyboardType="email-address"
         autoCapitalize="none"
+        onChangeText={setEmail}
         theme={{ roundness: 16 }}
       />
       <TextInput
@@ -28,10 +56,11 @@ export default function Signup({ toggle }: { toggle: () => void }) {
         label="Password"
         autoCapitalize="none"
         theme={{ roundness: 16 }}
+        onChangeText={setPassword}
         secureTextEntry
       />
-      <Button style={styles.button} mode="contained">
-        Create Account{" "}
+      <Button style={styles.button} mode="contained" onPress={handleSignup}>
+{isLoading?<ActivityIndicator color="white" />: "Create Account"}
       </Button>
       <Button mode="text" onPress={toggle}>
         Already have an account? Sign in

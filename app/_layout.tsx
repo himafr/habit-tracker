@@ -1,25 +1,34 @@
-import { Stack, useRouter } from "expo-router";
-import { ReactNode, useEffect } from "react";
+import { AuthProvider, useAuth } from "@/src/context/AuthContext";
+import { Stack } from "expo-router";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+
+function RootLayoutInner() {
+  const { isAuthenticated } = useAuth();
+
+  if (isAuthenticated) {
+    return (
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="authentication" options={{ headerShown: false }} />
+      </Stack>
+    );
+  }
+
+  return (
+    <Stack>
+      <Stack.Screen name="authentication" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
-  function RouteGuard({children}:{children:ReactNode}){
-    const router= useRouter();
-    const isAuthenticated = false; //TODO Replace with actual authentication logic
-    useEffect(()=>{
-      //TODO: Add loading state while checking for authentication and remove segments 
-        if(!isAuthenticated){
-          router.replace("/authentication/auth")
-      };
-    },[isAuthenticated,router]);
-    return <>{children}</>
-  }
   return (
-    
-    <Stack >
-    <RouteGuard>
-    <Stack.Screen name="(tabs)" options={{headerShown: false}} />
-  </RouteGuard>
-    <Stack.Screen name="authentication" options={{headerShown: false}} />
-  </Stack>
+    <AuthProvider>
+      {/* <PaperProvider> */}
+        <SafeAreaProvider>
+      <RootLayoutInner />
+        </SafeAreaProvider>
+      {/* </PaperProvider> */}
+    </AuthProvider>
   );
 }
