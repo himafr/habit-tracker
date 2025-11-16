@@ -1,7 +1,7 @@
 import { AuthProvider, useAuth } from "@/src/context/AuthContext";
 import { Stack } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-
 function RootLayoutInner() {
   const { isAuthenticated } = useAuth();
 
@@ -23,6 +23,8 @@ function RootLayoutInner() {
 
 export default function RootLayout() {
   return (
+  <GestureHandlerRootView style={{flex:1}}>
+
     <AuthProvider>
       {/* <PaperProvider> */}
         <SafeAreaProvider>
@@ -30,5 +32,6 @@ export default function RootLayout() {
         </SafeAreaProvider>
       {/* </PaperProvider> */}
     </AuthProvider>
+  </GestureHandlerRootView>
   );
 }

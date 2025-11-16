@@ -1,6 +1,7 @@
 // Read specific columns
 
 import { supabase } from "@/lib/supabase";
+import { Habits } from "../types/database.type";
 
 // let { data: habits, error } = await supabase
 //   .from('habits')
@@ -55,6 +56,15 @@ import { supabase } from "@/lib/supabase";
 //   .not('column', 'like', 'Negate filter')
 //   .or('some_column.eq.Some value, other_column.eq.Other value')
 
+export async function getMyHabits({id}:{id:string}):Promise<Habits[]>{
+  
+  let { data: habits , error } = await supabase
+    .from('habits')
+    .select("*").eq('user_id', id).order('created_at',{ascending:false});
+    if (error) throw new Error(error.message);
+    if (!habits) throw new Error("No Data");
+    return habits;
+}
 // Insert rows
 
 export async function createHabit({
@@ -74,23 +84,28 @@ export async function createHabit({
     .select();
     if (error) throw new Error(error.message);
     return data;
-}
-// Insert many rows
-
-// const { data, error } = await supabase
-//   .from('habits')
-//   .insert([
-//     { some_column: 'someValue' },
-//     { some_column: 'otherValue' },
+  }
+  // Insert many rows
+  
+  // const { data, error } = await supabase
+  //   .from('habits')
+  //   .insert([
+    //     { some_column: 'someValue' },
+    //     { some_column: 'otherValue' },
 //   ])
 //   .select()
 
 // Upsert matching rows
+// export async function getMyHabits({id}:{id:string}){
 
-// const { data, error } = await supabase
-//   .from('habits')
-//   .upsert({ some_column: 'someValue' })
-//   .select()
+//   const { data, error } = await supabase
+//     .from('habits')
+//     .upsert({ user_id: id })
+//     .select();
+//     if (error) throw new Error(error.message);
+
+//     return data;
+// }
 
 // Update rows
 // Documentation
@@ -113,8 +128,11 @@ export async function createHabit({
 // delete lets you delete rows. delete will match all rows by default, so remember to specify your filters!
 
 // Delete matching rows
+export async function deleteHabit({id}:{id:string}){
 
-// const { error } = await supabase
-//   .from('habits')
-//   .delete()
-//   .eq('some_column', 'someValue')
+  const { error } = await supabase
+    .from('habits')
+    .delete()
+    .eq('id', id)
+    if (error) throw new Error(error.message);
+}
