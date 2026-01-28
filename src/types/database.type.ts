@@ -1,4 +1,4 @@
-export interface Habits {
+export interface HabitType {
   created_at: string;
   description: string;
   frequency: string;
@@ -8,4 +8,11 @@ export interface Habits {
   title: string;
   user_id: string;
   updated_at: string;
+}
+
+export interface HabitCompletions {
+  created_at: string;
+  habit_id: string;
+  id: string;
+  user_id: string;
 }

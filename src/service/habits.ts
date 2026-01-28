@@ -1,7 +1,7 @@
 // Read specific columns
 
 import { supabase } from "@/lib/supabase";
-import { Habits } from "../types/database.type";
+import { HabitCompletions, HabitType } from "../types/database.type";
 
 // let { data: habits, error } = await supabase
 //   .from('habits')
@@ -56,14 +56,19 @@ import { Habits } from "../types/database.type";
 //   .not('column', 'like', 'Negate filter')
 //   .or('some_column.eq.Some value, other_column.eq.Other value')
 
-export async function getMyHabits({id}:{id:string}):Promise<Habits[]>{
-  
-  let { data: habits , error } = await supabase
-    .from('habits')
-    .select("*").eq('user_id', id).order('created_at',{ascending:false});
-    if (error) throw new Error(error.message);
-    if (!habits) throw new Error("No Data");
-    return habits;
+export async function getMyHabits({
+  id,
+}: {
+  id: string;
+}): Promise<HabitType[]> {
+  let { data: habits, error } = await supabase
+    .from("habits")
+    .select("*")
+    .eq("user_id", id)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  if (!habits) throw new Error("No Data");
+  return habits;
 }
 // Insert rows
 
@@ -71,7 +76,7 @@ export async function createHabit({
   title,
   description,
   frequency,
-  user_id
+  user_id,
 }: {
   title: string;
   description: string;
@@ -80,18 +85,29 @@ export async function createHabit({
 }) {
   const { data, error } = await supabase
     .from("habits")
-    .insert([{ title, description, frequency, user_id}])
+    .insert([{ title, description, frequency, user_id }])
     .select();
-    if (error) throw new Error(error.message);
-    return data;
-  }
-  // Insert many rows
-  
-  // const { data, error } = await supabase
-  //   .from('habits')
-  //   .insert([
-    //     { some_column: 'someValue' },
-    //     { some_column: 'otherValue' },
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function getHabit({ id }: { id: string }): Promise<HabitType> {
+  let { data: habits, error } = await supabase
+    .from("habits")
+    .select()
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+
+  console.log(habits);
+  return habits?.[0];
+}
+// Insert many rows
+
+// const { data, error } = await supabase
+//   .from('habits')
+//   .insert([
+//     { some_column: 'someValue' },
+//     { some_column: 'otherValue' },
 //   ])
 //   .select()
 
@@ -107,32 +123,42 @@ export async function createHabit({
 //     return data;
 // }
 
-// Update rows
-// Documentation
-
-// update lets you update rows. update will match all rows by default. You can update specific rows using horizontal filters, e.g. eq, lt, and is.
-
-// update will also return the replaced values for UPDATE.
-
 // Update matching rows
+export async function updateHabit({
+  id,
+  last_completed,
+}: Pick<HabitType, "id" | "last_completed">) {
+  const habit = await getHabit({ id });
 
-// const { data, error } = await supabase
-//   .from('habits')
-//   .update({ other_column: 'otherValue' })
-//   .eq('some_column', 'someValue')
-//   .select()
+  if (!habit) throw new Error("Habit not found");
 
+  const { data, error } = await supabase
+    .from("habits")
+    .update({ last_completed, streak_count: habit.streak_count + 1 })
+    .eq("id", id)
+    .select();
+  if (error) throw new Error(error.message);
+  return data;
+}
 // Delete rows
 // Documentation
 
 // delete lets you delete rows. delete will match all rows by default, so remember to specify your filters!
 
 // Delete matching rows
-export async function deleteHabit({id}:{id:string}){
+export async function deleteHabit({ id }: { id: string }) {
+  const { error } = await supabase.from("habits").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
 
-  const { error } = await supabase
-    .from('habits')
-    .delete()
-    .eq('id', id)
-    if (error) throw new Error(error.message);
+export async function completeHabit(
+  completeHabit: Pick<HabitCompletions, "habit_id" | "user_id">,
+): Promise<HabitCompletions> {
+  const { data, error } = await supabase
+    .from("habit_completions")
+    .insert([completeHabit])
+    .select();
+  if (error) throw new Error(error.message);
+  console.log(data);
+  return data?.[0];
 }

@@ -6,6 +6,7 @@ const Login = ({ toggle,handleSnackText,showSnackbar }: { toggle: () => void ,sh
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const { login, isLoading } = useAuth();
+  const [secure,setSecure]=useState(true);
  async function handleLogin() {
     try{
     await  login({ email, password });
@@ -41,7 +42,8 @@ const Login = ({ toggle,handleSnackText,showSnackbar }: { toggle: () => void ,sh
         theme={{ roundness: 16 }}
         value={password}
         onChangeText={setPassword}
-        secureTextEntry
+        secureTextEntry={secure}
+        right={<TextInput.Icon icon="eye" onPress={()=>setSecure(v=>!v)} />}
       />
       <Button style={styles.button} mode="contained" onPress={handleLogin}>
         {isLoading ? <ActivityIndicator color="white" /> : "Login"}

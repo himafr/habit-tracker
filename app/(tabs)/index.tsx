@@ -1,6 +1,11 @@
 import { useAuth } from "@/src/context/AuthContext";
-import { deleteHabit, getMyHabits } from "@/src/service/habits";
-import { Habits } from "@/src/types/database.type";
+import {
+  completeHabit,
+  deleteHabit,
+  getMyHabits,
+  updateHabit,
+} from "@/src/service/habits";
+import { HabitType } from "@/src/types/database.type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
@@ -8,7 +13,7 @@ import { Swipeable } from "react-native-gesture-handler";
 import { Button, Surface, Text } from "react-native-paper";
 
 export default function Index() {
-  const [habits, setHabits] = useState<Habits[]>([]);
+  const [habits, setHabits] = useState<HabitType[]>([]);
   const { logout, user } = useAuth();
   const swipeableRefs = useRef<{ [key: string]: Swipeable | null }>({});
   if (!user) return null;
@@ -45,7 +50,10 @@ export default function Index() {
         )}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
         {habits.length > 0 &&
           habits.map((habit, key) => {
             return (
@@ -58,9 +66,21 @@ export default function Index() {
                 overshootRight={false}
                 renderLeftActions={renderLeftActions}
                 renderRightActions={renderRightActions}
-                onSwipeableOpen={(dir) => {
-                  if ((dir = "left")) {
+                onSwipeableOpen={async (dir) => {
+                  if (dir === "left") {
                     deleteHabit({ id: habit.id });
+                  }
+                  if (dir === "right") {
+                    if (user.email) {
+                      const habitCompleted = await completeHabit({
+                        habit_id: habit.id,
+                        user_id: user.email,
+                      });
+                      await updateHabit({
+                        id: habit.id,
+                        last_completed: habitCompleted.created_at,
+                      });
+                    }
                   }
                   swipeableRefs.current[habit.id]?.close();
                 }}
@@ -202,6 +222,9 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     marginTop: 2,
     paddingLeft: 16,
-    // maxWidth:60,
+    // maxWidth: 60,
+  },
+  scrollView: {
+    marginBottom: 50,
   },
 });
