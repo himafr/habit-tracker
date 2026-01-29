@@ -1,30 +1,52 @@
+import EmptyState from "@/src/components/EmptyState";
 import { useAuth } from "@/src/context/AuthContext";
-import {
-  completeHabit,
-  deleteHabit,
-  getMyHabits,
-  updateHabit,
-} from "@/src/service/habits";
+import { useHabits } from "@/src/context/HabitContext";
+import { completeHabit, deleteHabit, updateHabit } from "@/src/service/habits";
 import { HabitType } from "@/src/types/database.type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 import { Button, Surface, Text } from "react-native-paper";
 
 export default function Index() {
-  const [habits, setHabits] = useState<HabitType[]>([]);
   const { logout, user } = useAuth();
+  const { completedHabitsId, getPageData, habits } = useHabits();
   const swipeableRefs = useRef<{ [key: string]: Swipeable | null }>({});
+  useEffect(() => {
+    getPageData();
+  }, [getPageData]);
+
+  async function handleRightAction(habit: HabitType) {
+    if (user?.email) {
+      const habitCompleted = await completeHabit({
+        habit_id: habit.id,
+        user_id: user.id,
+      });
+      await updateHabit({
+        id: habit.id,
+        last_completed: habitCompleted.created_at,
+      });
+      getPageData();
+    }
+  }
+  async function handleLeftAction(habitId: string) {
+    await deleteHabit({ id: habitId });
+    getPageData();
+  }
+
+  function isCompleted(habitId: string) {
+    return completedHabitsId.includes(habitId);
+  }
+
   if (!user) return null;
-
-  getMyHabits({ id: user?.id }).then((res) => {
-    setHabits(res);
-  });
-
-  const renderRightActions = () => (
+  const renderRightActions = ({ habitId }: { habitId: string }) => (
     <View style={styles.swipeActionRight}>
-      <MaterialCommunityIcons name="check-circle" size={32} color={"#fff"} />
+      {isCompleted(habitId) ? (
+        <Text style={{ color: "#fff" }}>Completed</Text>
+      ) : (
+        <MaterialCommunityIcons name="check-circle" size={32} color={"#fff"} />
+      )}
     </View>
   );
   const renderLeftActions = () => (
@@ -42,13 +64,7 @@ export default function Index() {
           <MaterialCommunityIcons name="logout" size={16} />
         </Button>
       </View>
-      <View style={styles.emptyState}>
-        {habits.length === 0 && (
-          <Text style={styles.emptyText}>
-            No habits yet. Add your first habit{" "}
-          </Text>
-        )}
-      </View>
+      {habits.length === 0 && <EmptyState />}
 
       <ScrollView
         style={styles.scrollView}
@@ -65,27 +81,26 @@ export default function Index() {
                 overshootLeft={false}
                 overshootRight={false}
                 renderLeftActions={renderLeftActions}
-                renderRightActions={renderRightActions}
+                renderRightActions={() =>
+                  renderRightActions({ habitId: habit.id })
+                }
                 onSwipeableOpen={async (dir) => {
                   if (dir === "left") {
-                    deleteHabit({ id: habit.id });
+                    handleLeftAction(habit.id);
                   }
-                  if (dir === "right") {
-                    if (user.email) {
-                      const habitCompleted = await completeHabit({
-                        habit_id: habit.id,
-                        user_id: user.email,
-                      });
-                      await updateHabit({
-                        id: habit.id,
-                        last_completed: habitCompleted.created_at,
-                      });
-                    }
+                  if (dir === "right" && !isCompleted(habit.id)) {
+                    handleRightAction(habit);
                   }
                   swipeableRefs.current[habit.id]?.close();
                 }}
               >
-                <Surface style={styles.card} elevation={0}>
+                <Surface
+                  style={[
+                    styles.card,
+                    isCompleted(habit.id) && styles.cardCompleted,
+                  ]}
+                  elevation={0}
+                >
                   <View style={styles.cardContent}>
                     <Text style={styles.cardTitle}>{habit.title}</Text>
                     <Text style={styles.cardDescription}>
@@ -169,6 +184,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  cardCompleted: {
+    opacity: 0.6,
+  },
   streakBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -195,14 +213,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textTransform: "uppercase",
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  emptyText: {
-    color: "#666666",
-  },
+
   swipeActionRight: {
     backgroundColor: "#4caf50",
     justifyContent: "center",

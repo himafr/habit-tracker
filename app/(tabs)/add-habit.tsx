@@ -22,6 +22,7 @@ export default function addHabitScreen() {
     title,
     isLoading,
   } = useAddHabit();
+
   return (
     <View style={styles.container}>
       <TextInput

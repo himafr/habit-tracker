@@ -16,3 +16,9 @@ export interface HabitCompletions {
   id: string;
   user_id: string;
 }
+
+export interface StreakData {
+  total: number;
+  bestStreak: number;
+  streak: number;
+}

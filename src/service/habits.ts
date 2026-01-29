@@ -70,6 +70,37 @@ export async function getMyHabits({
   if (!habits) throw new Error("No Data");
   return habits;
 }
+export async function getTodayCompletedHabitsId({
+  id,
+}: {
+  id: string;
+}): Promise<{ habitsId: string[]; habits: HabitType[] }> {
+  let { data: habits, error } = await supabase
+    .from("habits")
+    .select("*")
+    .eq("user_id", id)
+    .gt("last_completed", new Date().toISOString().split("T")[0])
+    .gt("streak_count", 0)
+    .order("last_completed", { ascending: false });
+  if (error) throw new Error(error.message);
+  if (!habits) throw new Error("No Data");
+  const habitsId: string[] = habits.map((habit) => habit.id);
+  return { habitsId, habits };
+}
+export async function getTodayCompletedHabits({
+  id,
+}: {
+  id: string;
+}): Promise<{ habitsCompleted: HabitCompletions[] }> {
+  let { data: habit_completions, error } = await supabase
+    .from("habit_completions")
+    .select("*")
+    .eq("user_id", id);
+  if (error) throw new Error(error.message);
+  if (!habit_completions) throw new Error("No Data");
+  console.log("completeHabit ", habit_completions);
+  return { habitsCompleted: habit_completions };
+}
 // Insert rows
 
 export async function createHabit({
@@ -159,6 +190,6 @@ export async function completeHabit(
     .insert([completeHabit])
     .select();
   if (error) throw new Error(error.message);
-  console.log(data);
+  console.log("completeHabit", data);
   return data?.[0];
 }
